@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@layer utilities{
+    .newfont{
+        font-family:Verdana, Geneva, Tahoma, sans-serif;
+    }
+}
