@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchMedia } from "../lib/anilist";
 
+const GENRES = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Slice of Life", "Sports", "Supernatural"];
 const load = () => { try { return JSON.parse(localStorage.getItem("animasters:list") || "[]"); } catch { return []; } };
 
 function Card({ m, saved, onOpen, onSave }) {
@@ -41,21 +42,38 @@ export default function App() {
   const [type, setType] = useState("ANIME");
   const [q, setQ] = useState("");
   const [term, setTerm] = useState("");
-  const [res, setRes] = useState({ key: "", items: [], err: false });
+  const [genre, setGenre] = useState("");
+  const [res, setRes] = useState({ key: "", items: [], err: false, page: 1, next: false });
+  const sentinel = useRef(null);
+  const busy = useRef(false);
   const [tries, setTries] = useState(0);
   const [open, setOpen] = useState(null);
   const [list, setList] = useState(load);
   const [view, setView] = useState("browse");
 
   useEffect(() => { const t = setTimeout(() => setTerm(q.trim()), 350); return () => clearTimeout(t); }, [q]);
-  const key = `${type}:${term}:${tries}`;
+  const key = `${type}:${term}:${genre}:${tries}`;
   useEffect(() => {
     const ctl = new AbortController();
-    fetchMedia(term, type, ctl.signal).then((items) => setRes({ key, items, err: false })).catch((e) => e.name !== "AbortError" && setRes({ key, items: [], err: true }));
+    fetchMedia(term, type, genre, 1, ctl.signal).then(({ list, hasNext }) => setRes({ key, items: list, err: false, page: 1, next: hasNext })).catch((e) => e.name !== "AbortError" && setRes({ key, items: [], err: true, page: 1, next: false }));
     return () => ctl.abort();
-  }, [term, type, key]);
+  }, [term, type, genre, key]);
   const items = res.items;
   const state = res.key !== key ? "loading" : res.err ? "error" : items.length ? "ok" : "empty";
+  // Infinite scroll: load the next page when the sentinel nears the viewport.
+  useEffect(() => {
+    if (view !== "browse" || state !== "ok" || !res.next || !sentinel.current) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting || busy.current) return;
+      busy.current = true;
+      fetchMedia(term, type, genre, res.page + 1)
+        .then(({ list, hasNext }) => setRes((r) => (r.key === key ? { ...r, items: [...r.items, ...list.filter((x) => !r.items.some((y) => y.id === x.id))], page: r.page + 1, next: hasNext } : r)))
+        .catch(() => {})
+        .finally(() => { busy.current = false; });
+    }, { rootMargin: "400px" });
+    io.observe(sentinel.current);
+    return () => io.disconnect();
+  }, [view, state, res.next, res.page, term, type, genre, key]);
   useEffect(() => { try { localStorage.setItem("animasters:list", JSON.stringify(list)); } catch { /* storage unavailable */ } }, [list]);
 
   const toggle = (m) => setList((l) => (l.some((x) => x.id === m.id) ? l.filter((x) => x.id !== m.id) : [...l, m]));
@@ -78,18 +96,23 @@ export default function App() {
           </div>
         </nav>
       </header>
-      <section className="bg-[url('/images/super.webp')] bg-cover bg-center"><div className="bg-black/65 px-4 py-14 text-center sm:py-24">
+      <section className="bg-cover bg-center" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}images/super.webp)` }}><div className="bg-black/65 px-4 py-14 text-center sm:py-24">
         <h1 className="text-3xl font-bold italic text-gold sm:text-5xl">Find your next favourite.</h1>
         <p className="mx-auto mt-3 max-w-xl text-gray-200">Search trending anime and manga, save what you want to follow, and jump to official places to watch or read.</p>
         <input value={q} onChange={(e) => { setQ(e.target.value); setView("browse"); }} type="search" aria-label="Search anime or manga" placeholder="Search e.g. Dragon Ball, Gachiakuta" className="mt-6 w-full max-w-md rounded-full border border-white/30 bg-black/60 px-5 py-3 text-white placeholder:text-gray-400" />
         <div className="mt-4 flex justify-center gap-2 text-sm">{["ANIME", "MANGA"].map((t) => <button key={t} onClick={() => setType(t)} aria-pressed={type === t} className={`rounded-full border px-4 py-1 ${type === t ? "border-gold bg-gold text-black" : "border-white/30"}`}>{t === "ANIME" ? "Anime" : "Manga"}</button>)}</div>
       </div></section>
       <main id="main" className="mx-auto min-h-[50vh] max-w-6xl px-4 py-10">
+        {view === "browse" && (
+          <div className="mb-5 flex flex-wrap gap-2 text-sm" role="group" aria-label="Filter by genre">
+            {["", ...GENRES].map((g) => <button key={g} onClick={() => setGenre(g)} aria-pressed={genre === g} className={`rounded-full border px-3 py-1 ${genre === g ? "border-gold bg-gold text-black" : "border-white/20"}`}>{g || "All genres"}</button>)}
+          </div>
+        )}
         <h2 className="mb-5 text-lg font-semibold">{view === "list" ? "My list" : term ? `Results for “${term}”` : `Trending ${type === "ANIME" ? "anime" : "manga"}`}</h2>
         {view === "list" ? (list.length ? grid : <p className="text-gray-400">Nothing saved yet. Tap “+ Save” on any title.</p>)
           : state === "loading" ? <p role="status" className="text-gray-400">Loading…</p>
           : state === "error" ? <p role="alert">Couldn’t load titles. <button className="underline" onClick={() => setTries((n) => n + 1)}>Try again</button></p>
-          : state === "empty" ? <p className="text-gray-400">No matches. Try another spelling.</p> : grid}
+          : state === "empty" ? <p className="text-gray-400">No matches. Try another spelling or genre.</p> : <>{grid}{res.next && <div ref={sentinel} role="status" className="py-8 text-center text-sm text-gray-400">Loading more…</div>}</>}
       </main>
       <footer className="border-t border-white/10 px-4 py-8 text-center text-xs text-gray-400">
         AniMasters doesn’t host or stream episodes or chapters. Data and images come from AniList; all titles belong to their owners.
