@@ -123,7 +123,7 @@ export default function Showcase() {
   if (fallback) return <Static />;
   const jump = (f) => scrollTo({ top: box.current.offsetTop + f * (box.current.offsetHeight - innerHeight), behavior: "smooth" });
   return (
-    <section ref={box} aria-label="Scroll to explore the fighters" className="relative" style={{ height: "800vh" }}>
+    <section ref={box} id="showcase" aria-label="Scroll to explore the fighters" className="relative" style={{ height: "800vh" }}>
       <div className="sticky top-0 h-screen overflow-hidden bg-ink">
         <canvas ref={canvas} className="absolute inset-0 h-full w-full" aria-hidden="true" />
         <div ref={bar} className="absolute inset-x-0 top-0 z-20 h-[3px] origin-left bg-gold" style={{ transform: "scaleX(0)", boxShadow: "0 0 14px #fcd34d" }} />
