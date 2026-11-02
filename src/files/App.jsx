@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { fetchMedia } from "../lib/anilist";
 // Loaded on demand so the 3D engine never slows the first paint.
+const Morph = lazy(() => import("../components/Morph"));
 const Showcase = lazy(() => import("../components/Showcase"));
 
 const GENRES = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Slice of Life", "Sports", "Supernatural"];
@@ -93,6 +94,7 @@ export default function App() {
   return (
     <>
       <div className="progress" aria-hidden="true" /><div className="glow" aria-hidden="true" />
+      <Suspense fallback={null}><Morph /></Suspense>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-gold focus:p-2 focus:text-black">Skip to content</a>
       <header className="sticky top-0 z-40 border-b border-white/10 bg-ink/90 backdrop-blur">
         <nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3" aria-label="Main">
