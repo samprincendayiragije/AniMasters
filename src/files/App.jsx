@@ -6,12 +6,16 @@ const load = () => { try { return JSON.parse(localStorage.getItem("animasters:li
 
 function Card({ m, saved, onOpen, onSave }) {
   return (
-    <article className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5">
+    <article className="card3d group relative overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <div className="tilt"
+        onPointerMove={(e) => { if (e.pointerType !== "mouse") return; const el = e.currentTarget, r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; el.style.setProperty("--tilt-x", `${(0.5 - y) * 14}deg`); el.style.setProperty("--tilt-y", `${(x - 0.5) * 14}deg`); el.style.setProperty("--lx", `${x * 100}%`); el.style.setProperty("--ly", `${y * 100}%`); }}
+        onPointerLeave={(e) => { e.currentTarget.style.setProperty("--tilt-x", "0deg"); e.currentTarget.style.setProperty("--tilt-y", "0deg"); }}>
       <button onClick={() => onOpen(m)} className="block w-full text-left" aria-label={`Open ${m.title}`}>
         <img src={m.cover} alt="" loading="lazy" className="aspect-[2/3] w-full object-cover" style={{ background: m.color }} />
         <div className="p-3"><h3 className="line-clamp-2 text-sm font-semibold">{m.title}</h3>
           <p className="mt-1 text-xs text-gray-400">{m.format}{m.score ? ` · ★ ${m.score / 10}` : ""}</p></div>
       </button>
+      </div>
       <button onClick={() => onSave(m)} aria-pressed={saved} className={`absolute right-2 top-2 rounded-full px-3 py-1 text-xs font-semibold ${saved ? "bg-gold text-black" : "bg-black/70"}`}>{saved ? "Saved" : "+ Save"}</button>
     </article>
   );
@@ -79,13 +83,14 @@ export default function App() {
   const toggle = (m) => setList((l) => (l.some((x) => x.id === m.id) ? l.filter((x) => x.id !== m.id) : [...l, m]));
   const shown = view === "list" ? list : items;
   const grid = (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid3d grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {shown.map((m) => <Card key={m.id} m={m} saved={list.some((x) => x.id === m.id)} onOpen={setOpen} onSave={toggle} />)}
     </div>
   );
 
   return (
     <>
+      <div className="progress" aria-hidden="true" /><div className="glow" aria-hidden="true" />
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-gold focus:p-2 focus:text-black">Skip to content</a>
       <header className="sticky top-0 z-40 border-b border-white/10 bg-ink/90 backdrop-blur">
         <nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3" aria-label="Main">
@@ -96,7 +101,9 @@ export default function App() {
           </div>
         </nav>
       </header>
-      <section className="bg-cover bg-center" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}images/super.webp)` }}><div className="bg-black/65 px-4 py-14 text-center sm:py-24">
+      <section className="relative overflow-hidden" style={{ perspective: "900px" }}>
+        <div className="hero-bg absolute inset-0 bg-cover bg-center" aria-hidden="true" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}images/super.webp)` }} />
+        <div className="hero-content relative bg-black/65 px-4 py-14 text-center sm:py-24">
         <h1 className="text-3xl font-bold italic text-gold sm:text-5xl">Find your next favourite.</h1>
         <p className="mx-auto mt-3 max-w-xl text-gray-200">Search trending anime and manga, save what you want to follow, and jump to official places to watch or read.</p>
         <input value={q} onChange={(e) => { setQ(e.target.value); setView("browse"); }} type="search" aria-label="Search anime or manga" placeholder="Search e.g. Dragon Ball, Gachiakuta" className="mt-6 w-full max-w-md rounded-full border border-white/30 bg-black/60 px-5 py-3 text-white placeholder:text-gray-400" />
@@ -108,7 +115,7 @@ export default function App() {
             {["", ...GENRES].map((g) => <button key={g} onClick={() => setGenre(g)} aria-pressed={genre === g} className={`rounded-full border px-3 py-1 ${genre === g ? "border-gold bg-gold text-black" : "border-white/20"}`}>{g || "All genres"}</button>)}
           </div>
         )}
-        <h2 className="mb-5 text-lg font-semibold">{view === "list" ? "My list" : term ? `Results for “${term}”` : `Trending ${type === "ANIME" ? "anime" : "manga"}`}</h2>
+        <h2 className="morph mb-5 origin-left text-lg font-semibold">{view === "list" ? "My list" : term ? `Results for “${term}”` : `Trending ${type === "ANIME" ? "anime" : "manga"}`}</h2>
         {view === "list" ? (list.length ? grid : <p className="text-gray-400">Nothing saved yet. Tap “+ Save” on any title.</p>)
           : state === "loading" ? <p role="status" className="text-gray-400">Loading…</p>
           : state === "error" ? <p role="alert">Couldn’t load titles. <button className="underline" onClick={() => setTries((n) => n + 1)}>Try again</button></p>
