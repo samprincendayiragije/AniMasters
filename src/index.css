@@ -4,3 +4,33 @@ html { scroll-behavior: smooth; background: var(--color-ink); color: #f3f4f6; }
 body { font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif; }
 :focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
+
+/* Scroll-driven 3D. Only used where the browser supports it and the visitor allows motion;
+   otherwise the page is plain and every element is visible. */
+.progress { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 60; background: linear-gradient(90deg, #fcd34d, #f97316, #ec4899); transform-origin: 0 50%; transform: scaleX(0); box-shadow: 0 0 12px #fcd34d; pointer-events: none; }
+.glow { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 40% at 20% 0%, rgba(252,211,77,.18), transparent 70%), radial-gradient(50% 40% at 90% 60%, rgba(236,72,153,.14), transparent 70%); }
+.tilt { position: relative; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .tilt { transition: transform .18s ease-out; transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); }
+  .tilt::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .2s; background: radial-gradient(circle at var(--lx, 50%) var(--ly, 50%), rgba(255,255,255,.22), transparent 55%); }
+  .tilt:hover::after { opacity: 1; }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .grid3d { perspective: 1100px; }
+    .card3d { animation: fly linear both; animation-timeline: view(); animation-range: entry 0% cover 35%; --ry: 0deg; --ty: 90px; }
+    .card3d:nth-child(odd) { --ry: -38deg; }
+    .card3d:nth-child(even) { --ry: 38deg; --ty: 140px; }
+    @keyframes fly { from { opacity: 0; transform: translate3d(0, var(--ty), -420px) rotateX(26deg) rotateY(var(--ry)); } to { opacity: 1; transform: none; } }
+    .morph { animation: morph linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
+    @keyframes morph { from { opacity: .2; transform: scale(.8) skewX(-14deg); letter-spacing: .2em; } to { opacity: 1; transform: none; letter-spacing: normal; } }
+    .hero-bg { animation: bgzoom linear both; animation-timeline: scroll(root); animation-range: 0 90vh; }
+    @keyframes bgzoom { to { transform: scale(1.3) translateY(10%); } }
+    .hero-content { transform-origin: 50% 100%; animation: heroout linear both; animation-timeline: scroll(root); animation-range: 0 60vh; }
+    @keyframes heroout { to { transform: translateY(-70px) scale(.92) rotateX(16deg); opacity: .15; } }
+    .progress { animation: grow linear both; animation-timeline: scroll(root); }
+    @keyframes grow { to { transform: scaleX(1); } }
+    .glow { animation: hue linear both; animation-timeline: scroll(root); }
+    @keyframes hue { to { filter: hue-rotate(170deg); } }
+  }
+}
