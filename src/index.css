@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@layer utilities{
-    .newfont{
-        font-family:Verdana, Geneva, Tahoma, sans-serif;
-    }
-}
+@theme { --color-gold: #fcd34d; --color-ink: #0b0b10; }
+html { scroll-behavior: smooth; background: var(--color-ink); color: #f3f4f6; }
+body { font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif; }
+:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
