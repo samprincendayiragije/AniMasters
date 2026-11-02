@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchMedia } from "../lib/anilist";
+import Showcase from "../components/Showcase";
 
 const GENRES = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Slice of Life", "Sports", "Supernatural"];
 const load = () => { try { return JSON.parse(localStorage.getItem("animasters:list") || "[]"); } catch { return []; } };
@@ -109,6 +110,7 @@ export default function App() {
         <input value={q} onChange={(e) => { setQ(e.target.value); setView("browse"); }} type="search" aria-label="Search anime or manga" placeholder="Search e.g. Dragon Ball, Gachiakuta" className="mt-6 w-full max-w-md rounded-full border border-white/30 bg-black/60 px-5 py-3 text-white placeholder:text-gray-400" />
         <div className="mt-4 flex justify-center gap-2 text-sm">{["ANIME", "MANGA"].map((t) => <button key={t} onClick={() => setType(t)} aria-pressed={type === t} className={`rounded-full border px-4 py-1 ${type === t ? "border-gold bg-gold text-black" : "border-white/30"}`}>{t === "ANIME" ? "Anime" : "Manga"}</button>)}</div>
       </div></section>
+      <Showcase />
       <main id="main" className="mx-auto min-h-[50vh] max-w-6xl px-4 py-10">
         {view === "browse" && (
           <div className="mb-5 flex flex-wrap gap-2 text-sm" role="group" aria-label="Filter by genre">
